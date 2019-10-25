@@ -1,6 +1,7 @@
 from pyqubo import Array
 import numpy as np
 import solver
+import dinkelbach
 
 
 # generate test problem
@@ -15,7 +16,7 @@ def generate_test_case(size, num_terms, var_type="BINARY"):
 
 
 def initialize_lambda(num_terms):
-    return [np.random.randint(1, 5, size=num_terms)]
+    return np.random.randint(1, 5, size=num_terms)
 
 
 def initialize_solution(size):
@@ -30,10 +31,11 @@ def construct_bqm(x, lamb, numerator, divisor):
 
 
 if __name__ == '__main__':
-    size = 3
-    num_terms = 2
+    size = 15
+    num_terms = 1
     x, numerator, divisor = generate_test_case(size, num_terms)
     lamb = initialize_lambda(num_terms)
-    bqm = construct_bqm(x, lamb, numerator, divisor)
     previous_solution = initialize_solution(size)
-    print(solver.sa_solver(bqm, previous_solution))
+    dinkelbach.dinkelbach_for_one_ratio(x, lamb, numerator, divisor, previous_solution)
+    print(solver.exact_solver(numerator, divisor, size, num_terms))
+
