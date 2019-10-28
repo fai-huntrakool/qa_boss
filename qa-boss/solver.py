@@ -12,12 +12,12 @@ def sa_solver(bqm, previous_solution, num_reads=100):
     for sample, energy in response.data(['sample', 'energy']):
         if sum(sample.values()) > 0:
             current_solution = sample
-    size = len(previous_solution)
-    solution = []
-    for i in range(size):
-        key = 'x[{}]'.format(i)
-        solution.append(current_solution[key])
-    current_solution = np.array(solution)
+            size = len(previous_solution)
+            solution = []
+            for i in range(size):
+                key = 'x[{}]'.format(i)
+                solution.append(current_solution[key])
+            current_solution = np.array(solution)
     return current_solution
 
 

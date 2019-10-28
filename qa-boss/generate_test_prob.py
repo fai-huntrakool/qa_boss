@@ -1,4 +1,4 @@
-from pyqubo import Array
+from pyqubo import Array, Constraint
 import numpy as np
 import solver
 import dinkelbach
@@ -21,7 +21,8 @@ def initialize_solution(size):
 
 def construct_bqm(x, lamb, numerator, divisor):
     feed_obj_fun = np.sum(np.dot(numerator, x)) - np.sum(np.dot(lamb, np.dot(divisor, x)))
-    model = feed_obj_fun.compile()
+  #  constraint = Constraint(x, label='Constraint')
+    model = (feed_obj_fun + constraint).compile()
     bqm = model.to_dimod_bqm()
     return bqm
 
