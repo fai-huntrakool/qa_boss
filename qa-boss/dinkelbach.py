@@ -48,9 +48,9 @@ def dinkelbach_for_multiple_ratios(x, lamb, u, v, uk, vk, numerator, divisor, pr
     previous_solution = current_solution
     print_iteration_value(i, current_solution, obj_1, obj_2, lamb)
 
-    if (abs(obj_2) <= 0.0001) | (i > limit_iteration):
+    if ((abs(obj_2) <= 0.0001) & (min(sub_obj_2) >= 0)) | (i > limit_iteration):
         return x, obj_1, obj_2
-    elif obj_2 != 0:
+    else:
         lamb, u, v = update_lambda(lamb, u, v, uk, vk, obj_2, sub_obj_1, sub_obj_2)
         dinkelbach_for_multiple_ratios(x, lamb, u, v, uk, vk, numerator, divisor, previous_solution, limit_iteration,
                                        i+1)
@@ -77,7 +77,7 @@ def initialize_lambda(num_terms, size, numerator, divisor):
 
 
 def update_lambda(lamb, u, v, uk, vk, obj_2, sub_obj_1, sub_obj_2):
-    if min(sub_obj_2) < 0:
+    if (abs(obj_2) <= 0.0001) and min(sub_obj_2) < 0:
         for t in range(len(sub_obj_2)):
             if sub_obj_2[t] < 0:
                 lamb[t] = sub_obj_1[t]
