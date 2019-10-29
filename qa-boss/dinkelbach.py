@@ -41,17 +41,19 @@ def dinkelbach_for_one_ratio(x, lamb, numerator, divisor, previous_solution, i=1
         return x, obj_1, obj_2
 
 
-def dinkelbach_for_multiple_ratios(x, lamb, u, v, uk, vk, numerator, divisor, previous_solution, i=1):
+def dinkelbach_for_multiple_ratios(x, lamb, u, v, uk, vk, numerator, divisor, previous_solution, limit_iteration, i=1):
     bqm = gtp.construct_bqm(x, lamb, numerator, divisor)
     current_solution = solver.sa_solver(bqm, previous_solution)
     obj_1, sub_obj_1, obj_2, sub_obj_2 = objective_value(current_solution, numerator, divisor, lamb)
     previous_solution = current_solution
     print_iteration_value(i, current_solution, obj_1, obj_2, lamb)
-    if (abs(obj_2) <= 0.0001) | (i > 50):
+
+    if (abs(obj_2) <= 0.0001) | (i > limit_iteration):
         return x, obj_1, obj_2
     elif obj_2 != 0:
         lamb, u, v = update_lambda(lamb, u, v, uk, vk, obj_2, sub_obj_1, sub_obj_2)
-        dinkelbach_for_multiple_ratios(x, lamb, u, v, uk, vk, numerator, divisor, previous_solution, i + 1)
+        dinkelbach_for_multiple_ratios(x, lamb, u, v, uk, vk, numerator, divisor, previous_solution, limit_iteration,
+                                       i+1)
 
 
 def check_if_neg(l):
@@ -65,8 +67,8 @@ def initialize_lambda(num_terms, size, numerator, divisor):
     vk = np.array([0] * num_terms)
     while True:
         x_0 = np.random.randint(0, 2, size=size)
-        _, uk, obj_2, _ = objective_value(x_0, numerator, divisor, vk)
-        if (obj_2 >= 0) and check_if_neg(uk):
+        obj_1, uk, obj_2, _ = objective_value(x_0, numerator, divisor, vk)
+        if (obj_2 >= 0) and check_if_neg(uk) and np.isfinite(obj_1):
             break
     v = vk
     u = np.array(uk)
