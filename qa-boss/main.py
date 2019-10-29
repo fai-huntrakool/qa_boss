@@ -1,7 +1,6 @@
 import dinkelbach as dkb
 import generate_test_prob as gtp
 import solver
-import numpy as np
 
 
 def one_ratio(size, is_enable=0, num_terms=1):

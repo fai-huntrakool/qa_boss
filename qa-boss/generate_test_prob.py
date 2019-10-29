@@ -1,7 +1,5 @@
 from pyqubo import Array, Constraint
 import numpy as np
-import solver
-import dinkelbach
 
 
 # generate test problem

@@ -2,8 +2,6 @@ import numpy as np
 import neal
 import itertools
 
-import pandas as pd
-
 
 def sa_solver(bqm, previous_solution, num_reads=100):
     sampler = neal.SimulatedAnnealingSampler()
