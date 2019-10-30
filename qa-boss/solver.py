@@ -1,6 +1,8 @@
 import numpy as np
 import neal
 import itertools
+from dwave.system.samplers import DWaveSampler
+from dwave.system.composites import EmbeddingComposite
 
 
 def sa_solver(bqm, previous_solution, num_reads=100):
@@ -17,6 +19,22 @@ def sa_solver(bqm, previous_solution, num_reads=100):
                 solution.append(current_solution[key])
             current_solution = np.array(solution)
     return current_solution
+
+
+def qa_solver(bqm, previous_solution, num_reads=100):
+    sampler = EmbeddingComposite(DWaveSampler())
+    response = sampler.sample(bqm, num_reads=num_reads)
+    current_solution = previous_solution
+    for sample, energy in response.data(['sample', 'energy']):
+        if sum(sample.values()) > 0:
+            current_solution = sample
+            size = len(previous_solution)
+            solution = []
+            for i in range(size):
+                key = 'x[{}]'.format(i)
+                solution.append(current_solution[key])
+            current_solution = np.array(solution)
+    return current_solution, response
 
 
 def exact_solver(numerator, divisor, size, num_terms):
