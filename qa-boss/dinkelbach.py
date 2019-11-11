@@ -6,7 +6,6 @@ import solver
 def objective_value(x, numerator, divisor, lamb):
     # obj_1 = num/den
     # obj_2 = num - lamb*den
-
     num = np.dot(numerator, x)
     den = np.dot(divisor, x)
     den_with_lamb = lamb * den
@@ -21,7 +20,7 @@ def objective_value(x, numerator, divisor, lamb):
 
 def print_iteration_value(i, current_solution, obj_1, obj_2, lamb):
     print('iteration: {}'.format(i))
-    print('solution: {}'.format(current_solution))
+    print('solution: {}'.format(current_solution[:-1]))
     print('min P(x)-a*Q(X) = {}.'.format(obj_2))
     print('fix lambda={} : min P(x)/Q(X) = {}.'.format(lamb, obj_1))
 
@@ -33,7 +32,6 @@ def dinkelbach_for_one_ratio(x, lamb, numerator, divisor, previous_solution, i=1
     previous_solution = current_solution
     print_iteration_value(i, current_solution, obj_1, obj_2, lamb)
     print('--------------------------------------------')
-
     if obj_2 != 0:
         lamb = np.array(sub_obj_1)
         dinkelbach_for_one_ratio(x, lamb, numerator, divisor, previous_solution, i + 1)
@@ -66,36 +64,51 @@ def check_if_neg(l):
 
 
 def initialize_lambda(num_terms, size, numerator, divisor):
-    vk = np.array([0] * num_terms)
+    vk = np.array([0.0] * num_terms)
     while True:
-        x_0 = np.random.randint(0, 2, size=size)
+        x_0 = np.append(np.random.randint(0, 2, size=size), [1])
         obj_1, uk, obj_2, _ = objective_value(x_0, numerator, divisor, np.array([2] * num_terms))
-        if (obj_2 <= 0) and np.isfinite(obj_1):
+        if (obj_2 >= 0) and np.isfinite(obj_1):
             break
     v = vk
     u = 1.5*np.array(uk)
-    #lamb = (v + u) / 2
-    lamb = np.array(uk)
+    lamb = (v + u) / 2
+    #lamb = np.array(uk)
     return lamb, u, v, uk, vk, x_0, obj_1, obj_2
+
+#
+# def update_lambda(lamb, u, v, uk, vk, obj_2, sub_obj_1, sub_obj_2):
+#     print('u : {}'.format(u))
+#     print('v : {}'.format(v))
+#     print('--------------------------------------------')
+#
+#     if min(sub_obj_2) < 0:
+#         for t in range(len(sub_obj_2)):
+#             if sub_obj_2[t] < 0:
+#                 lamb[t] = sub_obj_1[t]
+#         v = vk
+#         ta = uk / max(lamb)
+#         u = ta * lamb
+#
+#     elif obj_2 > 0.01:
+#         v = lamb
+#         lamb = (v + u) / 2
+#     elif obj_2 < -0.01:
+#         u = lamb
+#         lamb = (v + u) / 2
+#     return lamb, u, v
+
 
 
 def update_lambda(lamb, u, v, uk, vk, obj_2, sub_obj_1, sub_obj_2):
     print('u : {}'.format(u))
     print('v : {}'.format(v))
     print('--------------------------------------------')
-
-    if min(sub_obj_2) < 0:
-        for t in range(len(sub_obj_2)):
-            if sub_obj_2[t] < 0:
-                lamb[t] = sub_obj_1[t]
-        v = vk
-        ta = uk / max(lamb)
-        u = ta * lamb
-
-    elif obj_2 > 0.01:
-        v = lamb
-        lamb = (v + u) / 2
-    elif obj_2 < -0.01:
-        u = lamb
-        lamb = (v + u) / 2
+    for i in range(len(sub_obj_2)):
+        if sub_obj_2[i] > 0.01:
+            v[i] = lamb[i]
+            lamb[i] = (v[i] + u[i]) / 2
+        elif sub_obj_2[i] < 0.01:
+            u[i] = lamb[i]
+            lamb[i] = (v[i] + u[i]) / 2
     return lamb, u, v

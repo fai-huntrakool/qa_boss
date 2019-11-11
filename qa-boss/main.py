@@ -14,8 +14,6 @@ def one_ratio(size, is_enable=0, num_terms=1):
 
 def multiple_ratio(size, num_terms, limit_iteration=150):
     x, numerator, divisor = gtp.generate_test_case(size, num_terms)
-    print(numerator)
-    print(divisor)
     lamb, u, v, uk, vk, previous_solution, obj_1, obj_2 = dkb.initialize_lambda(num_terms, size, numerator, divisor)
     if obj_2 == 0:
         dkb.print_iteration_value(0, previous_solution, obj_1, obj_2, lamb)
@@ -25,6 +23,8 @@ def multiple_ratio(size, num_terms, limit_iteration=150):
     print(solver.exact_solver(numerator, divisor, size, num_terms))
 
 
+import numpy as np
+
 if __name__ == '__main__':
-    #one_ratio(15, 1)
-    multiple_ratio(10, 3, 150)
+    #one_ratio(3, 1)
+    multiple_ratio(3, 3, 5)
