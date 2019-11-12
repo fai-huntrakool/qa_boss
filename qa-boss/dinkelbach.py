@@ -68,7 +68,7 @@ def initialize_lambda(num_terms, size, numerator, divisor):
     while True:
         x_0 = np.append(np.random.randint(0, 2, size=size), [1])
         obj_1, uk, obj_2, _ = objective_value(x_0, numerator, divisor, np.array([2] * num_terms))
-        if (obj_2 >= 0) and np.isfinite(obj_1):
+        if (obj_2 <= 0) and np.isfinite(obj_1):
             break
     v = vk
     u = 1.5*np.array(uk)
