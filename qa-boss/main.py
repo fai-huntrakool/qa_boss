@@ -27,4 +27,4 @@ import numpy as np
 
 if __name__ == '__main__':
     #one_ratio(3, 1)
-    multiple_ratio(3, 3, 100)
+    multiple_ratio(3, 3, 500)

@@ -18,6 +18,22 @@ def objective_value(x, numerator, divisor, lamb):
     return obj_1, sub_obj_1, obj_2, sub_obj_2
 
 
+
+def objective_value_for_find_lamb(x, numerator, divisor):
+    # obj_1 = num/den
+    # obj_2 = num - lamb*den
+    num = np.dot(numerator, x)
+    den = np.dot(divisor, x)
+
+    sub_obj_1 = [num[i] / den[i] if den[i] != 0 else float('Inf') for i in range(len(num))]
+    obj_1 = np.sum(sub_obj_1)
+    lamb = np.array(sub_obj_1)/2
+    den_with_lamb = lamb * den
+    sub_obj_2 = [num[i] - den_with_lamb[i] for i in range(len(num))]
+    obj_2 = np.sum(sub_obj_2)
+    return obj_1, sub_obj_1, obj_2, sub_obj_2
+
+
 def print_iteration_value(i, current_solution, obj_1, obj_2, lamb):
     print('iteration: {}'.format(i))
     print('solution: {}'.format(current_solution[:-1]))
@@ -47,13 +63,13 @@ def dinkelbach_for_multiple_ratios(x, lamb, u, v, uk, vk, numerator, divisor, pr
     print_iteration_value(i, current_solution, obj_1, obj_2, lamb)
     print('sub_obj_1 : {}'.format(sub_obj_1))
     print('sub_obj_2 : {}'.format(sub_obj_2))
-    if ((abs(obj_2) <= 0.01) & (min(sub_obj_2) >= 0)) | (i > limit_iteration):
+    if ((abs(obj_2) <= 0.01) & (min(sub_obj_2) >= -0.01)) | (i > limit_iteration):
         print('--------------------------------------------')
         return x, obj_1, obj_2
     else:
         lamb, u, v = update_lambda(lamb, u, v, uk, vk, obj_2, sub_obj_1, sub_obj_2)
         dinkelbach_for_multiple_ratios(x, lamb, u, v, uk, vk, numerator, divisor, previous_solution, limit_iteration,
-                                       i+1)
+                                       i + 1)
 
 
 def check_if_neg(l):
@@ -67,20 +83,27 @@ def initialize_lambda(num_terms, size, numerator, divisor):
     vk = np.array([0.0] * num_terms)
     while True:
         x_0 = np.append(np.random.randint(0, 2, size=size), [1])
-        obj_1, uk, obj_2, _ = objective_value(x_0, numerator, divisor, np.array([2] * num_terms))
-        if (obj_2 <= 0) and np.isfinite(obj_1):
+        obj_1, uk, obj_2, _ = objective_value_for_find_lamb(x_0, numerator, divisor)
+        if obj_2 >= 0:
             break
     v = vk
-    u = 1.5*np.array(uk)
-    lamb = (v + u) / 2
-    #lamb = np.array(uk)
+    u = 2*np.array(uk)
+    lamb = np.array(uk)
+    # lamb = np.array(uk)
     return lamb, u, v, uk, vk, x_0, obj_1, obj_2
 
+#
 #
 # def update_lambda(lamb, u, v, uk, vk, obj_2, sub_obj_1, sub_obj_2):
 #     print('u : {}'.format(u))
 #     print('v : {}'.format(v))
 #     print('--------------------------------------------')
+#     if np.array_equal(np.round(u,3),np.round(v,3)):
+#         for t in range(len(sub_obj_2)):
+#             if sub_obj_2[t] > 0:
+#                 v[t] = vk
+#             elif sub_obj_2[t] < 0:
+#                 u[t] = uk/max(lamb)*lamb
 #
 #     if min(sub_obj_2) < 0:
 #         for t in range(len(sub_obj_2)):
@@ -90,13 +113,14 @@ def initialize_lambda(num_terms, size, numerator, divisor):
 #         ta = uk / max(lamb)
 #         u = ta * lamb
 #
-#     elif obj_2 > 0.01:
+#     elif obj_2 > 0:
 #         v = lamb
 #         lamb = (v + u) / 2
-#     elif obj_2 < -0.01:
+#     elif obj_2 < 0:
 #         u = lamb
 #         lamb = (v + u) / 2
 #     return lamb, u, v
+
 
 
 
@@ -104,11 +128,21 @@ def update_lambda(lamb, u, v, uk, vk, obj_2, sub_obj_1, sub_obj_2):
     print('u : {}'.format(u))
     print('v : {}'.format(v))
     print('--------------------------------------------')
-    for i in range(len(sub_obj_2)):
-        if sub_obj_2[i] > 0.01:
-            v[i] = lamb[i]
-            lamb[i] = (v[i] + u[i]) / 2
-        elif sub_obj_2[i] < 0.01:
-            u[i] = lamb[i]
-            lamb[i] = (v[i] + u[i]) / 2
+
+    if np.array_equal(np.round(u, 3), np.round(v, 3)):
+        for t in range(len(sub_obj_2)):
+            if sub_obj_2[t] > 0:
+                v[t] = vk[t]
+            elif sub_obj_2[t] < 0:
+                u[t] = uk[t] / max(lamb) * lamb[t]
+        lamb = (u + v) / 2
+    else:
+        for i in range(len(sub_obj_2)):
+            if sub_obj_2[i] > 0:
+                v[i] = lamb[i]
+                lamb[i] = (v[i] + u[i]) / 2
+            elif sub_obj_2[i] < 0:
+                u[i] = lamb[i]
+                lamb[i] = (v[i] + u[i]) / 2
     return lamb, u, v
+
