@@ -18,7 +18,6 @@ def objective_value(x, numerator, divisor, lamb):
     return obj_1, sub_obj_1, obj_2, sub_obj_2
 
 
-
 def objective_value_for_find_lamb(x, numerator, divisor):
     # obj_1 = num/den
     # obj_2 = num - lamb*den
@@ -27,7 +26,7 @@ def objective_value_for_find_lamb(x, numerator, divisor):
 
     sub_obj_1 = [num[i] / den[i] if den[i] != 0 else float('Inf') for i in range(len(num))]
     obj_1 = np.sum(sub_obj_1)
-    lamb = np.array(sub_obj_1)/2
+    lamb = np.array(sub_obj_1) / 2
     den_with_lamb = lamb * den
     sub_obj_2 = [num[i] - den_with_lamb[i] for i in range(len(num))]
     obj_2 = np.sum(sub_obj_2)
@@ -63,8 +62,10 @@ def dinkelbach_for_multiple_ratios(x, lamb, u, v, uk, vk, numerator, divisor, pr
     print_iteration_value(i, current_solution, obj_1, obj_2, lamb)
     print('sub_obj_1 : {}'.format(sub_obj_1))
     print('sub_obj_2 : {}'.format(sub_obj_2))
+    print('u : {}'.format(u))
+    print('v : {}'.format(v))
+    print('--------------------------------------------')
     if ((abs(obj_2) <= 0.01) & (min(sub_obj_2) >= -0.01)) | (i > limit_iteration):
-        print('--------------------------------------------')
         return x, obj_1, obj_2
     else:
         lamb, u, v = update_lambda(lamb, u, v, uk, vk, obj_2, sub_obj_1, sub_obj_2)
@@ -88,23 +89,11 @@ def initialize_lambda(num_terms, size, numerator, divisor):
             break
     v = vk
     u = 2*np.array(uk)
-    lamb = np.array(uk)
-    # lamb = np.array(uk)
+    lamb = (u + v)/2
     return lamb, u, v, uk, vk, x_0, obj_1, obj_2
 
-#
-#
+# Original Algorithm
 # def update_lambda(lamb, u, v, uk, vk, obj_2, sub_obj_1, sub_obj_2):
-#     print('u : {}'.format(u))
-#     print('v : {}'.format(v))
-#     print('--------------------------------------------')
-#     if np.array_equal(np.round(u,3),np.round(v,3)):
-#         for t in range(len(sub_obj_2)):
-#             if sub_obj_2[t] > 0:
-#                 v[t] = vk
-#             elif sub_obj_2[t] < 0:
-#                 u[t] = uk/max(lamb)*lamb
-#
 #     if min(sub_obj_2) < 0:
 #         for t in range(len(sub_obj_2)):
 #             if sub_obj_2[t] < 0:
@@ -121,28 +110,22 @@ def initialize_lambda(num_terms, size, numerator, divisor):
 #         lamb = (v + u) / 2
 #     return lamb, u, v
 
+# #Algorithm A
+# def update_lambda(lamb, u, v, uk, vk, obj_2, sub_obj_1, sub_obj_2):
+#     lamb = sub_obj_1
+#     return lamb, u, v
 
 
-
+#Algorithm B
 def update_lambda(lamb, u, v, uk, vk, obj_2, sub_obj_1, sub_obj_2):
-    print('u : {}'.format(u))
-    print('v : {}'.format(v))
-    print('--------------------------------------------')
-
-    if np.array_equal(np.round(u, 3), np.round(v, 3)):
-        for t in range(len(sub_obj_2)):
-            if sub_obj_2[t] > 0:
-                v[t] = vk[t]
-            elif sub_obj_2[t] < 0:
-                u[t] = uk[t] / max(lamb) * lamb[t]
-        lamb = (u + v) / 2
-    else:
-        for i in range(len(sub_obj_2)):
-            if sub_obj_2[i] > 0:
-                v[i] = lamb[i]
-                lamb[i] = (v[i] + u[i]) / 2
-            elif sub_obj_2[i] < 0:
-                u[i] = lamb[i]
-                lamb[i] = (v[i] + u[i]) / 2
+    for i in range(len(sub_obj_2)):
+        if sub_obj_2[i] > 0:
+            u[i] = max(u[i], sub_obj_1[i])
+            v[i] = lamb[i]
+        else:
+            u[i] = lamb[i]
+            v[i] = min(v[i], sub_obj_1[i])
+    lamb = (v + u) / 2
     return lamb, u, v
+
 

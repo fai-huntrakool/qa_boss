@@ -23,8 +23,9 @@ def multiple_ratio(size, num_terms, limit_iteration=150):
     print(solver.exact_solver(numerator, divisor, size, num_terms))
 
 
+
 import numpy as np
 
 if __name__ == '__main__':
     #one_ratio(3, 1)
-    multiple_ratio(3, 3, 500)
+    multiple_ratio(3, 3, 100)
