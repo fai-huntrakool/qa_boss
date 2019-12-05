@@ -84,15 +84,36 @@ def delta_vector(num, den, lamb):
     size = len(num)
     delta = []
     for i in range(size):
-        delta.append(-2 * num[i] * den[i] + 2 * den[i] * den[i] * lamb[i])
+        temp = -2 * num[i] * den[i] + 2 * den[i] * den[i] * lamb[i]
+        delta.append(temp)
     return np.array(delta)
 
 
 def descent_condition(delta, pt):
-    if -1*np.dot(pt,delta) > 0:
+    print(np.dot(pt, delta))
+    if -1 * np.dot(pt, delta) > 0:
         return True
     else:
         return False
+
+
+def f(x, num, den):
+    sum_term = 0
+    for i in range(len(x)):
+        sum_term += np.square(num[i] - x[i] * den[i])
+    return sum_term
+
+
+def gradient_related(m, delta, pt):
+    if np.linalg.norm(pt) >= m * np.linalg.norm(delta):
+        return True
+    return False
+
+
+def wolfe_condition(alpha, mu, pt, delta, lamb, num, den):
+    if f(lamb + alpha * pt, num, den) <= f(lamb, num, den) + mu * alpha * pt * delta:
+        return True
+    return False
 
 
 def initialize_lambda(num_terms, size, numerator, divisor):
