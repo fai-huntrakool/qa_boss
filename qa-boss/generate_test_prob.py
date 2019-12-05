@@ -9,8 +9,12 @@ def generate_test_case(size, num_terms, var_type="BINARY"):
     x = np.append(Array.create('x', size, var_type), [1])
     numerator, divisor = [], []
     for i in range(num_terms):
+       # np.random.seed(700+50*i)
         numerator.append(np.random.randint(1, 10, size + 1))
+      #  np.random.seed(500+10*i)
         divisor.append(np.random.randint(1, 10, size + 1))
+    print(numerator)
+    print(divisor)
     return x, numerator, divisor
 
 
@@ -35,8 +39,8 @@ if __name__ == '__main__':
     y = Array.create('y', size, var_type)
     numerator, divisor = [], []
     for i in range(num_terms):
-        numerator.append(np.random.randint(1, 10, size + 1))
-        divisor.append(np.random.randint(1, 10, size + 1))
+        numerator.append(np.random.randint(1, 10, size + 1, 700))
+        divisor.append(np.random.randint(1, 10, size + 1, 700))
     lamb, _, _, _, _, previous_solution, _, _ = dkb.initialize_lambda(1, size, numerator, divisor)
     feed_obj_fun = (np.sum(np.dot(numerator, x)) - np.sum(np.dot(lamb, np.dot(divisor, x))))
     model = feed_obj_fun.compile()
