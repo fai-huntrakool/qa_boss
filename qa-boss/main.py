@@ -1,7 +1,7 @@
 import dinkelbach as dkb
 import generate_test_prob as gtp
 import solver
-
+from scipy.optimize import line_search
 
 def one_ratio(size, is_enable=0, num_terms=1):
     x, numerator, divisor = gtp.generate_test_case(size, num_terms)
@@ -28,23 +28,19 @@ import numpy as np
 
 if __name__ == '__main__':
     # one_ratio(3, 1)
-    # multiple_ratio(3, 3, 100)
-    size = 3
-    num_terms = 3
-    x, num, den = gtp.generate_test_case(size, num_terms)
-    lamb, u, v, uk, vk, previous_solution, obj_1, obj_2 = dkb.initialize_lambda(num_terms, size, num, den)
-    bqm = gtp.construct_bqm(x, lamb, num, den)
-    current_solution = solver.sa_solver(bqm, previous_solution)
-    obj_1, sub_obj_1, obj_2, sub_obj_2, num, den = dkb.objective_value(current_solution, num, den, lamb)
-    # num = np.dot(num, current_solution)
-    # den = np.dot(den, current_solution)
-    delta = dkb.delta_vector(num, den, lamb)
-    print(delta)
-    sign = np.sign(sub_obj_2)*-1
-    pt = np.random.random_sample(3)*max(delta)*10*sign
-    print("pt", pt)
-    print(dkb.descent_condition(delta, pt))
-    f_value = dkb.f(lamb, num, den)
-    print(f_value)
-    # dkb.gradient_related(m, delta, pt)
-    # dkb.wolfe_condition(alpha, mu, pt, delta, lamb, num, den)
+    multiple_ratio(3, 3, 150)
+    # size = 3
+    # num_terms = 3
+    #
+    # x, numerator, divisor = gtp.generate_test_case(size, num_terms)
+    # lamb, u, v, uk, vk, previous_solution, obj_1, obj_2 = dkb.initialize_lambda(num_terms, size, numerator, divisor)
+    #
+    # bqm = gtp.construct_bqm(x, lamb, numerator, divisor)
+    # current_solution = solver.sa_solver(bqm, previous_solution)
+    # obj_1, sub_obj_1, obj_2, sub_obj_2, num, den = dkb.objective_value(current_solution, numerator, divisor, lamb)
+    # f_value, func = dkb.f(lamb, num, den)
+    # delta, d_func = dkb.delta_vector(lamb, num, den)
+    # pt = dkb.descent_condition(delta)
+    # alpha, _, _, _, _, _ = line_search(func, d_func, lamb, pt)
+    # print("alpha", lamb+alpha*pt)
+    # print(dkb.update_lambda_ls(lamb, num, den))

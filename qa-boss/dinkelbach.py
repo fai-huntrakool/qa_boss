@@ -1,6 +1,8 @@
 import numpy as np
 import generate_test_prob as gtp
 import solver
+import numpy as np
+from scipy.optimize import line_search
 
 
 def objective_value(x, numerator, divisor, lamb):
@@ -62,15 +64,41 @@ def dinkelbach_for_multiple_ratios(x, lamb, u, v, uk, vk, numerator, divisor, pr
     print_iteration_value(i, current_solution, obj_1, obj_2, lamb)
     print('sub_obj_1 : {}'.format(sub_obj_1))
     print('sub_obj_2 : {}'.format(sub_obj_2))
-    print('u : {}'.format(u))
-    print('v : {}'.format(v))
+    # print('u : {}'.format(u))
+    # print('v : {}'.format(v))
     print('--------------------------------------------')
     if ((abs(obj_2) <= 0.005) and min(sub_obj_2) >= -0.005) | (i > limit_iteration):
         return x, obj_1, obj_2
     else:
-        lamb, u, v = update_lambda(lamb, u, v, uk, vk, obj_2, sub_obj_1, sub_obj_2)
+        # lamb, u, v = update_lambda(lamb, u, v, uk, vk, obj_2, sub_obj_1, sub_obj_2)
+        lamb = update_lambda_ls(lamb, num, den)
         dinkelbach_for_multiple_ratios(x, lamb, u, v, uk, vk, numerator, divisor, previous_solution, limit_iteration,
                                        i + 1)
+
+#
+#
+# def update_lambda_ls(lamb, num, den):
+#     delta = 100
+#     while np.linalg.norm(delta) > 0.01:
+#         f_value, func = f(lamb, num, den)
+#         delta, d_func = delta_vector(lamb, num, den)
+#         pt = descent_condition(delta)
+#         alpha, _, _, _, _, _ = line_search(func, d_func, lamb, pt)
+#         if alpha is None:
+#             break
+#         lamb += alpha*pt
+#     return lamb
+
+def update_lambda_ls(lamb, num, den):
+    f_value, func = f(lamb, num, den)
+    delta, d_func = delta_vector(lamb, num, den)
+    pt = descent_condition(delta)*2
+    alpha, _, _, _, _, _ = line_search(func, d_func, lamb, pt)
+    i = 0
+    while (alpha is None) and (i < 10):
+        pt = descent_condition(delta)
+        alpha, _, _, _, _, _ = line_search(func, d_func, lamb, pt)
+    return lamb + alpha * pt
 
 
 def check_if_neg(l):
@@ -80,28 +108,37 @@ def check_if_neg(l):
     return True
 
 
-def delta_vector(num, den, lamb):
+def delta_vector(lamb, num, den):
     size = len(num)
     delta = []
     for i in range(size):
         temp = -2 * num[i] * den[i] + 2 * den[i] * den[i] * lamb[i]
         delta.append(temp)
-    return np.array(delta)
+    return np.array(delta), lambda a: [-2 * num[i] * den[i] + 2 * den[i] * den[i] * a[i] for i in range(len(a))]
 
 
-def descent_condition(delta, pt):
-    print(np.dot(pt, delta))
-    if -1 * np.dot(pt, delta) > 0:
-        return True
+# def descent_condition(delta, pt):
+#     p_k = delta
+#     print(np.dot(pt, delta))
+#     if -1 * np.dot(pt, delta) > 0:
+#         return True
+#     else:
+#         return False
+def descent_condition(delta):
+    p_k = np.random.randint(-5, 5, len(delta))
+    if np.linalg.norm(delta) == 0:
+        return 0
+    if np.dot(p_k, delta) / np.linalg.norm(p_k) / np.linalg.norm(delta) < 0:
+        return p_k
     else:
-        return False
+        return descent_condition(delta)
 
 
-def f(x, num, den):
+def f(lamb, num, den):
     sum_term = 0
-    for i in range(len(x)):
-        sum_term += np.square(num[i] - x[i] * den[i])
-    return sum_term
+    for i in range(len(lamb)):
+        sum_term += np.square(num[i] - lamb[i] * den[i])
+    return sum_term, lambda a: np.sum([np.square(num[i] - a[i] * den[i]) for i in range(len(a))])
 
 
 def gradient_related(m, delta, pt):
