@@ -57,9 +57,11 @@ def dinkelbach_for_one_ratio(x, lamb, numerator, divisor, previous_solution, i=1
         return x, obj_1, obj_2
 
 
-def dinkelbach_for_multiple_ratios(x, lamb, u, v, uk, vk, numerator, divisor, previous_solution, limit_iteration, i=1):
+def dinkelbach_for_multiple_ratios(x, lamb, u, v, uk, vk, numerator, divisor, previous_solution,
+                                   limit_iteration, i=1):
     bqm = gtp.construct_bqm(x, lamb, numerator, divisor)
-    current_solution = solver.sa_solver(bqm, previous_solution)
+    current_solution, res = solver.qa_solver(bqm, previous_solution)
+    #print(res)
     obj_1, sub_obj_1, obj_2, sub_obj_2, num, den = objective_value(current_solution, numerator, divisor, lamb)
     previous_solution = current_solution
     print_iteration_value(i, current_solution, obj_1, obj_2, lamb)
@@ -74,7 +76,8 @@ def dinkelbach_for_multiple_ratios(x, lamb, u, v, uk, vk, numerator, divisor, pr
         #lamb, u, v = update_lambda(lamb, u, v, uk, vk, obj_2, sub_obj_1, sub_obj_2)
         #lamb = update_lambda_ls(lamb, num, den)
         lamb = update_lambda_tr(lamb, num, den)
-        dinkelbach_for_multiple_ratios(x, lamb, u, v, uk, vk, numerator, divisor, previous_solution, limit_iteration,
+        dinkelbach_for_multiple_ratios(x, lamb, u, v, uk, vk, numerator, divisor, previous_solution,
+                                       limit_iteration,
                                        i + 1)
 
 
@@ -266,10 +269,11 @@ if __name__ == '__main__':
     _, u, v, uk, vk, previous_solution, obj_1, obj_2 = initialize_lambda(num_terms, size, numerator, divisor)
     lamb = np.array([0.6428571428571429, 0.7647058823529411, 0.7857142857142857])
     bqm = gtp.construct_bqm(x, lamb, numerator, divisor)
-    current_solution, df = solver.sa_solver(bqm, previous_solution)
+    current_solution, res = solver.qa_solver(bqm, previous_solution)
+    print(current_solution)
+    print(res)
     obj_1, sub_obj_1, obj_2, sub_obj_2, num, den = objective_value(current_solution, numerator, divisor, lamb)
     previous_solution = current_solution
     print_iteration_value(1, current_solution, obj_1, obj_2, lamb)
     print('sub_obj_1 : {}'.format(sub_obj_1))
     print('sub_obj_2 : {}'.format(sub_obj_2))
-    print(df)

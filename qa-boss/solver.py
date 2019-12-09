@@ -20,22 +20,36 @@ def sa_solver(bqm, previous_solution, num_reads=100):
             key = 'x[{}]'.format(i)
             solution.append(current_solution[key])
         current_solution = np.append(np.array(solution), [1])
-    return current_solution
+    return current_solution, response
 
 
 def qa_solver(bqm, previous_solution, num_reads=100):
     sampler = EmbeddingComposite(DWaveSampler())
     response = sampler.sample(bqm, num_reads=num_reads)
     current_solution = previous_solution
+
+    ener = []
     for sample, energy in response.data(['sample', 'energy']):
-        current_solution = sample
-        size = len(previous_solution)
-        solution = []
-        for i in range(size - 1):
-            key = 'x[{}]'.format(i)
-            solution.append(current_solution[key])
-        current_solution = np.array(np.array(solution), [1])
-    return current_solution
+        ener.append(energy)
+
+    for i in ener:
+        if round(i) == 0.0:
+            condition = 0
+            break
+        else:
+            condition = min(ener)
+
+    for sample, energy in response.data(['sample', 'energy']):
+        if energy == condition:
+            current_solution = sample
+            size = len(previous_solution)
+            solution = []
+            for i in range(size - 1):
+                key = 'x[{}]'.format(i)
+                solution.append(current_solution[key])
+            current_solution = np.append(np.array(solution),[1])
+    return current_solution,response
+
 
 
 def exact_solver(numerator, divisor, size, num_terms):

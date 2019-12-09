@@ -3,23 +3,19 @@ import numpy as np
 import solver
 
 
-# generate test problem
-
-
-
 def generate_test_case(size, num_terms, var_type="BINARY"):
     x = np.append(Array.create('x', size, var_type), [1])
     numerator, divisor = [], []
     for i in range(num_terms):
-        # np.random.seed(800+90*i)#1
-        # np.random.seed(4+90*i)#2
-        # np.random.seed(90+90*i)#3
-        # np.random.seed(435+100*i)#4
+        #np.random.seed(800+90*i)#1
+        #np.random.seed(4+90*i)#2
+        #np.random.seed(90+90*i)#3
+        #np.random.seed(435+100*i)#4
         numerator.append(np.random.randint(1, 10, size + 1))
-        # np.random.seed(300+10*i)#1
-        # np.random.seed(90+90*i)#2
-        # np.random.seed(700+90*i)#3
-        # np.random.seed(567+1*i)#4
+        #np.random.seed(300+10*i)#1
+        #np.random.seed(90+90*i)#2
+        #np.random.seed(700+90*i)#3
+        #np.random.seed(567+1*i)#4
         divisor.append(np.random.randint(1, 10, size + 1))
     print(numerator)
     print(divisor)
