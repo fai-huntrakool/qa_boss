@@ -2,7 +2,7 @@ import numpy as np
 import generate_test_prob as gtp
 import solver
 import numpy as np
-from scipy.optimize import line_search
+from scipy.optimize import line_search, minimize
 
 
 def objective_value(x, numerator, divisor, lamb):
@@ -15,7 +15,8 @@ def objective_value(x, numerator, divisor, lamb):
     sub_obj_1 = [num[i] / den[i] if den[i] != 0 else float('Inf') for i in range(len(num))]
     obj_1 = np.sum(sub_obj_1)
 
-    sub_obj_2 = [num[i] - den_with_lamb[i] for i in range(len(num))]
+    #sub_obj_2 = [(num[i] - den_with_lamb[i])**2 for i in range(len(num))]
+    sub_obj_2 = [(num[i] - den_with_lamb[i]) for i in range(len(num))]
     obj_2 = np.sum(sub_obj_2)
     return obj_1, sub_obj_1, obj_2, sub_obj_2, num, den
 
@@ -70,10 +71,12 @@ def dinkelbach_for_multiple_ratios(x, lamb, u, v, uk, vk, numerator, divisor, pr
     if ((abs(obj_2) <= 0.005) and min(sub_obj_2) >= -0.005) | (i > limit_iteration):
         return x, obj_1, obj_2
     else:
-        # lamb, u, v = update_lambda(lamb, u, v, uk, vk, obj_2, sub_obj_1, sub_obj_2)
-        lamb = update_lambda_ls(lamb, num, den)
+        #lamb, u, v = update_lambda(lamb, u, v, uk, vk, obj_2, sub_obj_1, sub_obj_2)
+        #lamb = update_lambda_ls(lamb, num, den)
+        lamb = update_lambda_tr(lamb, num, den)
         dinkelbach_for_multiple_ratios(x, lamb, u, v, uk, vk, numerator, divisor, previous_solution, limit_iteration,
                                        i + 1)
+
 
 #
 #
@@ -92,7 +95,7 @@ def dinkelbach_for_multiple_ratios(x, lamb, u, v, uk, vk, numerator, divisor, pr
 def update_lambda_ls(lamb, num, den):
     f_value, func = f(lamb, num, den)
     delta, d_func = delta_vector(lamb, num, den)
-    pt = descent_condition(delta)*2
+    pt = descent_condition(delta) * 2
     alpha, _, _, _, _, _ = line_search(func, d_func, lamb, pt)
     i = 0
     while (alpha is None) and (i < 10):
@@ -114,7 +117,27 @@ def delta_vector(lamb, num, den):
     for i in range(size):
         temp = -2 * num[i] * den[i] + 2 * den[i] * den[i] * lamb[i]
         delta.append(temp)
-    return np.array(delta), lambda a: [-2 * num[i] * den[i] + 2 * den[i] * den[i] * a[i] for i in range(len(a))]
+    return np.array(delta), lambda a: np.array([-2 * num[i] * den[i] + 2 * den[i] * den[i] * a[i] for i in range(len(a))])
+
+
+def hessian_matrix(den):
+    size = len(den)
+    I = np.identity(size)
+    hess = []
+    for i in range(size):
+        hess.append(2 * den[i] ** 2)
+    hess = np.array(hess)
+    hess_matrix = hess * I
+    return hess_matrix, lambda a: hess_matrix
+
+
+def update_lambda_tr(lamb, num, den):
+    f_value, func = f(lamb, num, den)
+    delta, d_func = delta_vector(lamb, num, den)
+    hess, h_func = hessian_matrix(den)
+    res = minimize(func, lamb, method='trust-krylov',
+                   jac=d_func, hess=h_func)
+    return res.x
 
 
 # def descent_condition(delta, pt):
@@ -233,3 +256,20 @@ def update_lambda(lamb, u, v, uk, vk, obj_2, sub_obj_1, sub_obj_2):
             v[i] = (v[i] + sub_obj_1[i]) / 2
     lamb = (v + u) / 2
     return lamb, u, v
+
+
+
+if __name__ == '__main__':
+    size = 3
+    num_terms = 3
+    x, numerator, divisor = gtp.generate_test_case(size, num_terms)
+    _, u, v, uk, vk, previous_solution, obj_1, obj_2 = initialize_lambda(num_terms, size, numerator, divisor)
+    lamb = np.array([0.6428571428571429, 0.7647058823529411, 0.7857142857142857])
+    bqm = gtp.construct_bqm(x, lamb, numerator, divisor)
+    current_solution, df = solver.sa_solver(bqm, previous_solution)
+    obj_1, sub_obj_1, obj_2, sub_obj_2, num, den = objective_value(current_solution, numerator, divisor, lamb)
+    previous_solution = current_solution
+    print_iteration_value(1, current_solution, obj_1, obj_2, lamb)
+    print('sub_obj_1 : {}'.format(sub_obj_1))
+    print('sub_obj_2 : {}'.format(sub_obj_2))
+    print(df)

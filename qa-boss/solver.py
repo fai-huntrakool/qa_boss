@@ -5,11 +5,13 @@ import itertools
 
 # from dwave.system.samplers import DWaveSampler
 # from dwave.system.composites import EmbeddingComposite
+from dwave.system import EmbeddingComposite, DWaveSampler
 
 
 def sa_solver(bqm, previous_solution, num_reads=100):
     sampler = neal.SimulatedAnnealingSampler()
     response = sampler.sample(bqm, num_reads=num_reads)
+    current_solution = previous_solution
     for sample, energy in response.data(['sample', 'energy']):
         current_solution = sample
         size = len(previous_solution)
@@ -21,36 +23,19 @@ def sa_solver(bqm, previous_solution, num_reads=100):
     return current_solution
 
 
-#
-# def sa_solver(bqm, previous_solution, num_reads=100):
-#     sampler = neal.SimulatedAnnealingSampler()
-#     response = sampler.sample(bqm, num_reads=num_reads)
-#     current_solution = previous_solution
-#     for sample, energy in response.data(['sample', 'energy']):
-#         if sum(sample.values()) > 0:
-#             current_solution = sample
-#             size = len(previous_solution)
-#             solution = []
-#             for i in range(size-1):
-#                 key = 'x[{}]'.format(i)
-#                 solution.append(current_solution[key])
-#             current_solution = np.append(np.array(solution), [1])
-#     return current_solution
-
 def qa_solver(bqm, previous_solution, num_reads=100):
     sampler = EmbeddingComposite(DWaveSampler())
     response = sampler.sample(bqm, num_reads=num_reads)
     current_solution = previous_solution
     for sample, energy in response.data(['sample', 'energy']):
-        if sum(sample.values()) > 0:
-            current_solution = sample
-            size = len(previous_solution)
-            solution = []
-            for i in range(size):
-                key = 'x[{}]'.format(i)
-                solution.append(current_solution[key])
-            current_solution = np.array(solution)
-    return current_solution, response
+        current_solution = sample
+        size = len(previous_solution)
+        solution = []
+        for i in range(size - 1):
+            key = 'x[{}]'.format(i)
+            solution.append(current_solution[key])
+        current_solution = np.array(np.array(solution), [1])
+    return current_solution
 
 
 def exact_solver(numerator, divisor, size, num_terms):
@@ -71,3 +56,21 @@ def exact_solver(numerator, divisor, size, num_terms):
             objective_solution = comb[i]
             ideal_lamb = keep_lamb
     return objective_value, objective_solution, ideal_lamb
+
+
+
+#
+# def sa_solver(bqm, previous_solution, num_reads=100):
+#     sampler = neal.SimulatedAnnealingSampler()
+#     response = sampler.sample(bqm, num_reads=num_reads)
+#     current_solution = previous_solution
+#     for sample, energy in response.data(['sample', 'energy']):
+#         if sum(sample.values()) > 0:
+#             current_solution = sample
+#             size = len(previous_solution)
+#             solution = []
+#             for i in range(size-1):
+#                 key = 'x[{}]'.format(i)
+#                 solution.append(current_solution[key])
+#             current_solution = np.append(np.array(solution), [1])
+#     return current_solution
