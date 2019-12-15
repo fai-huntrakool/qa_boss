@@ -4,12 +4,21 @@ import solver
 import numpy as np
 from scipy.optimize import line_search, minimize
 
+def transform_x2spin(x):
+    return np.array([2*i-1 for i in x])
+
+
+def objective_function(x, numerator, divisor):
+    num = np.dot(numerator, x)**2
+    den = np.dot(divisor, x)
+    return num, den
+
 
 def objective_value(x, numerator, divisor, lamb):
     # obj_1 = num/den
     # obj_2 = num - lamb*den
-    num = np.dot(numerator, x)
-    den = np.dot(divisor, x)
+
+    num, den = objective_function(x,numerator,divisor)
     den_with_lamb = lamb * den
 
     sub_obj_1 = [num[i] / den[i] if den[i] != 0 else float('Inf') for i in range(len(num))]
@@ -24,8 +33,8 @@ def objective_value(x, numerator, divisor, lamb):
 def objective_value_for_find_lamb(x, numerator, divisor):
     # obj_1 = num/den
     # obj_2 = num - lamb*den
-    num = np.dot(numerator, x)
-    den = np.dot(divisor, x)
+
+    num, den = objective_function(x,numerator,divisor)
 
     sub_obj_1 = [num[i] / den[i] if den[i] != 0 else float('Inf') for i in range(len(num))]
     obj_1 = np.sum(sub_obj_1)
@@ -58,9 +67,10 @@ def dinkelbach_for_one_ratio(x, lamb, numerator, divisor, previous_solution, i=1
 
 
 def dinkelbach_for_multiple_ratios(x, lamb, u, v, uk, vk, numerator, divisor, previous_solution,
-                                   limit_iteration, i=1):
+                                   limit_iteration, is_spin=0, i=1):
     bqm = gtp.construct_bqm(x, lamb, numerator, divisor)
-    current_solution, res = solver.qa_solver(bqm, previous_solution)
+    current_solution, res = solver.sa_solver(bqm, previous_solution)
+
     #print(res)
     obj_1, sub_obj_1, obj_2, sub_obj_2, num, den = objective_value(current_solution, numerator, divisor, lamb)
     previous_solution = current_solution
@@ -71,14 +81,18 @@ def dinkelbach_for_multiple_ratios(x, lamb, u, v, uk, vk, numerator, divisor, pr
     # print('v : {}'.format(v))
     print('--------------------------------------------')
     if ((abs(obj_2) <= 0.005) and min(sub_obj_2) >= -0.005) | (i > limit_iteration):
+        if is_spin == 1:
+            current_solution = transform_x2spin(current_solution)
+            obj_1, sub_obj_1, obj_2, sub_obj_2, num, den = objective_value(current_solution, numerator, divisor, lamb)
+            print_iteration_value(i, current_solution, obj_1, obj_2, lamb)
         return x, obj_1, obj_2
     else:
-        #lamb, u, v = update_lambda(lamb, u, v, uk, vk, obj_2, sub_obj_1, sub_obj_2)
+        lamb, u, v = update_lambda(lamb, u, v, uk, vk, obj_2, sub_obj_1, sub_obj_2)
         #lamb = update_lambda_ls(lamb, num, den)
-        lamb = update_lambda_tr(lamb, num, den)
+        #lamb = update_lambda_tr(lamb, num, den)
         dinkelbach_for_multiple_ratios(x, lamb, u, v, uk, vk, numerator, divisor, previous_solution,
-                                       limit_iteration,
-                                       i + 1)
+                                       limit_iteration,is_spin,
+                                       i=i + 1)
 
 
 #

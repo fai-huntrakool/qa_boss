@@ -6,6 +6,7 @@ import itertools
 # from dwave.system.samplers import DWaveSampler
 # from dwave.system.composites import EmbeddingComposite
 from dwave.system import EmbeddingComposite, DWaveSampler
+import dinkelbach as dkb
 
 
 def sa_solver(bqm, previous_solution, num_reads=100):
@@ -16,8 +17,9 @@ def sa_solver(bqm, previous_solution, num_reads=100):
         current_solution = sample
         size = len(previous_solution)
         solution = []
+        alphabet = list(current_solution.keys())[0][0]
         for i in range(size - 1):
-            key = 'x[{}]'.format(i)
+            key = alphabet+'[{}]'.format(i)
             solution.append(current_solution[key])
         current_solution = np.append(np.array(solution), [1])
     return current_solution, response
@@ -52,28 +54,22 @@ def qa_solver(bqm, previous_solution, num_reads=100):
 
 
 
-def exact_solver(numerator, divisor, size, num_terms):
-    objective_value, objective_solution = float('Inf'), float('Inf')
-    comb = [np.array(i) for i in itertools.product([0, 1], repeat=size)]
-    lamb = []
+def exact_solver(numerator, divisor, size, num_terms, is_spin = 0):
+    if is_spin == 1:
+        binary = [-1,1]
+    else:
+        binary = [0,1]
+    min_value, objective_solution = float('Inf'), []
+    comb = [np.append(np.array(i), [1]) for i in itertools.product(binary, repeat=size)]
     for i in range(len(comb)):
-        total_value = 0
-        keep_lamb = []
-        for n in range(num_terms):
-            num = np.sum(comb[i] * numerator[n][:-1]) + numerator[n][-1]
-            den = np.sum(comb[i] * divisor[n][:-1]) + divisor[n][-1]
-            val = num / den
-            total_value += val
-            keep_lamb.append(val)
-        if objective_value > total_value:
-            objective_value = total_value
+        obj_1, _, _, _, n, d = dkb.objective_value(comb[i], numerator, divisor, np.array([1]*num_terms))
+        if min_value > obj_1:
+            min_value = obj_1
             objective_solution = comb[i]
-            ideal_lamb = keep_lamb
-    return objective_value, objective_solution, ideal_lamb
+    return min_value, objective_solution
 
 
 
-#
 # def sa_solver(bqm, previous_solution, num_reads=100):
 #     sampler = neal.SimulatedAnnealingSampler()
 #     response = sampler.sample(bqm, num_reads=num_reads)

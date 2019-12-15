@@ -1,7 +1,7 @@
 from pyqubo import Array, Constraint
 import numpy as np
 import solver
-
+import dinkelbach as dkb
 
 def generate_test_case(size, num_terms, var_type="BINARY"):
     x = np.append(Array.create('x', size, var_type), [1])
@@ -26,12 +26,13 @@ def initialize_solution(size):
     return np.random.randint(0, 2, size=size)
 
 
-def construct_bqm(x, lamb, numerator, divisor):
-    num = np.dot(numerator, x)
-    den = np.dot(lamb, np.dot(divisor, x))
-    feed_obj_fun = np.sum(np.dot(numerator, x)) - np.sum(np.dot(lamb, np.dot(divisor, x)))
+def construct_bqm(x, lamb, numerator, divisor, is_spin = 0):
+    num, den = dkb.objective_function(x, numerator, divisor)
+    feed_obj_fun = np.sum(num) - np.sum(np.dot(lamb, den))
     #feed_obj_fun = np.sum(((np.dot(numerator, x)) - (np.dot(lamb, np.dot(divisor, x))))**2)
     model = feed_obj_fun.compile()
+    if is_spin == 1:
+        qubo, offset = model.to_qubo()
     bqm = model.to_dimod_bqm()
     return bqm
 
