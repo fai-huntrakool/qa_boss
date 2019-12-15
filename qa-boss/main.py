@@ -16,6 +16,9 @@ def one_ratio(size, is_enable=0, num_terms=1):
 
 def multiple_ratio(size, num_terms, limit_iteration=150):
     x, numerator, divisor = gtp.generate_test_case(size, num_terms)
+    print('Exact Solver : ')
+    print(solver.exact_solver(numerator, divisor, size, num_terms))
+    print('--------------------------------------------')
     lamb, u, v, uk, vk, previous_solution, obj_1, obj_2 = dkb.initialize_lambda(num_terms, size, numerator, divisor)
     if obj_2 == 0:
         dkb.print_iteration_value(0, previous_solution, obj_1, obj_2, lamb)
@@ -26,12 +29,14 @@ def multiple_ratio(size, num_terms, limit_iteration=150):
     print(solver.exact_solver(numerator, divisor, size, num_terms))
 
 
-def mock_problem(size, num_covs, num_bins, limit_iteration = 10):
+def mock_problem(size, num_covs, num_bins, limit_iteration = 100):
+
     num_terms = (num_bins-1) * num_covs
     df = gp.create_random_dataset(size, num_covs)
     b_mat = gp.create_bins_array(df, num_bins, num_covs)
     x, numerator, divisor = gp.problem_formulation(size, b_mat, num_bins)
-
+    print(numerator)
+    print(divisor)
     lamb, u, v, uk, vk, previous_solution, obj_1, obj_2 = dkb.initialize_lambda(num_terms, size, numerator, divisor)
     if obj_2 == 0:
         dkb.print_iteration_value(0, previous_solution, obj_1, obj_2, lamb)
@@ -44,5 +49,5 @@ def mock_problem(size, num_covs, num_bins, limit_iteration = 10):
 
 if __name__ == '__main__':
     #one_ratio(3, 1)
-    #multiple_ratio(3, 3, 100)
-    mock_problem(size = 10, num_covs=2, num_bins=5)
+    #multiple_ratio(10, 4, 150)
+    mock_problem(size = 10, num_covs=2, num_bins=3)

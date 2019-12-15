@@ -34,7 +34,7 @@ def problem_formulation(size, b_mat, num_bins):
                     nume.append(0)
                     div.append(0)
             nume.append(0)
-            div.append((sum(div) * -1) + 0.1)
+            div.append((sum(div) * -1) + 0.01)
             numerator.append(nume)
             divisor.append(div)
     return S, numerator, divisor

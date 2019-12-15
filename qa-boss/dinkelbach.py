@@ -3,9 +3,11 @@ import generate_test_prob as gtp
 import solver
 import numpy as np
 from scipy.optimize import line_search, minimize
+from hyperopt import fmin, tpe, hp
+
 
 def transform_x2spin(x):
-    return np.array([2*i-1 for i in x])
+    return np.array([2 * i - 1 for i in x])
 
 
 def objective_function(x, numerator, divisor):
@@ -18,13 +20,13 @@ def objective_value(x, numerator, divisor, lamb):
     # obj_1 = num/den
     # obj_2 = num - lamb*den
 
-    num, den = objective_function(x,numerator,divisor)
+    num, den = objective_function(x, numerator, divisor)
     den_with_lamb = lamb * den
 
     sub_obj_1 = [num[i] / den[i] if den[i] != 0 else float('Inf') for i in range(len(num))]
     obj_1 = np.sum(sub_obj_1)
 
-    #sub_obj_2 = [(num[i] - den_with_lamb[i])**2 for i in range(len(num))]
+    # sub_obj_2 = [(num[i] - den_with_lamb[i])**2 for i in range(len(num))]
     sub_obj_2 = [(num[i] - den_with_lamb[i]) for i in range(len(num))]
     obj_2 = np.sum(sub_obj_2)
     return obj_1, sub_obj_1, obj_2, sub_obj_2, num, den
@@ -34,7 +36,7 @@ def objective_value_for_find_lamb(x, numerator, divisor):
     # obj_1 = num/den
     # obj_2 = num - lamb*den
 
-    num, den = objective_function(x,numerator,divisor)
+    num, den = objective_function(x, numerator, divisor)
 
     sub_obj_1 = [num[i] / den[i] if den[i] != 0 else float('Inf') for i in range(len(num))]
     obj_1 = np.sum(sub_obj_1)
@@ -70,8 +72,9 @@ def dinkelbach_for_multiple_ratios(x, lamb, u, v, uk, vk, numerator, divisor, pr
                                    limit_iteration, is_spin=0, i=1):
     bqm = gtp.construct_bqm(x, lamb, numerator, divisor)
     current_solution, res = solver.sa_solver(bqm, previous_solution)
-
-    #print(res)
+    if is_spin == 1:
+        current_solution = transform_x2spin(current_solution)
+    print(res)
     obj_1, sub_obj_1, obj_2, sub_obj_2, num, den = objective_value(current_solution, numerator, divisor, lamb)
     previous_solution = current_solution
     print_iteration_value(i, current_solution, obj_1, obj_2, lamb)
@@ -81,18 +84,24 @@ def dinkelbach_for_multiple_ratios(x, lamb, u, v, uk, vk, numerator, divisor, pr
     # print('v : {}'.format(v))
     print('--------------------------------------------')
     if ((abs(obj_2) <= 0.005) and min(sub_obj_2) >= -0.005) | (i > limit_iteration):
-        if is_spin == 1:
-            current_solution = transform_x2spin(current_solution)
-            obj_1, sub_obj_1, obj_2, sub_obj_2, num, den = objective_value(current_solution, numerator, divisor, lamb)
-            print_iteration_value(i, current_solution, obj_1, obj_2, lamb)
         return x, obj_1, obj_2
     else:
-        lamb, u, v = update_lambda(lamb, u, v, uk, vk, obj_2, sub_obj_1, sub_obj_2)
+        #lamb, u, v = update_lambda(lamb, u, v, uk, vk, obj_2, sub_obj_1, sub_obj_2)
         #lamb = update_lambda_ls(lamb, num, den)
-        #lamb = update_lambda_tr(lamb, num, den)
+        lamb = update_lambda_tr(lamb, num, den)
+        #lamb = update_lambda_hyperopt(lamb,num,den,u,v)
         dinkelbach_for_multiple_ratios(x, lamb, u, v, uk, vk, numerator, divisor, previous_solution,
-                                       limit_iteration,is_spin,
+                                       limit_iteration, is_spin,
                                        i=i + 1)
+
+
+def update_lambda_hyperopt(lamb, num, den, u, v):
+    _, func = f(lamb, num, den)
+    sp = [hp.uniform(str(dim), 0, 5) for dim in range(len(lamb))]
+    best = fmin(fn=func, space=sp, algo=tpe.suggest, max_evals=50)
+    lamb = list(best.values())
+    print(np.array(lamb))
+    return np.array(lamb)
 
 
 #
@@ -134,7 +143,8 @@ def delta_vector(lamb, num, den):
     for i in range(size):
         temp = -2 * num[i] * den[i] + 2 * den[i] * den[i] * lamb[i]
         delta.append(temp)
-    return np.array(delta), lambda a: np.array([-2 * num[i] * den[i] + 2 * den[i] * den[i] * a[i] for i in range(len(a))])
+    return np.array(delta), lambda a: np.array(
+        [-2 * num[i] * den[i] + 2 * den[i] * den[i] * a[i] for i in range(len(a))])
 
 
 def hessian_matrix(den):
@@ -185,7 +195,6 @@ def gradient_related(m, delta, pt):
     if np.linalg.norm(pt) >= m * np.linalg.norm(delta):
         return True
     return False
-
 
 def wolfe_condition(alpha, mu, pt, delta, lamb, num, den):
     if f(lamb + alpha * pt, num, den) <= f(lamb, num, den) + mu * alpha * pt * delta:
@@ -275,7 +284,6 @@ def update_lambda(lamb, u, v, uk, vk, obj_2, sub_obj_1, sub_obj_2):
     return lamb, u, v
 
 
-
 if __name__ == '__main__':
     size = 3
     num_terms = 3
@@ -283,11 +291,13 @@ if __name__ == '__main__':
     _, u, v, uk, vk, previous_solution, obj_1, obj_2 = initialize_lambda(num_terms, size, numerator, divisor)
     lamb = np.array([0.6428571428571429, 0.7647058823529411, 0.7857142857142857])
     bqm = gtp.construct_bqm(x, lamb, numerator, divisor)
-    current_solution, res = solver.qa_solver(bqm, previous_solution)
-    print(current_solution)
-    print(res)
+    current_solution, res = solver.sa_solver(bqm, previous_solution)
+    #print(current_solution)
+    #print(res)
     obj_1, sub_obj_1, obj_2, sub_obj_2, num, den = objective_value(current_solution, numerator, divisor, lamb)
-    previous_solution = current_solution
-    print_iteration_value(1, current_solution, obj_1, obj_2, lamb)
-    print('sub_obj_1 : {}'.format(sub_obj_1))
-    print('sub_obj_2 : {}'.format(sub_obj_2))
+    # previous_solution = current_solution
+    # print_iteration_value(1, current_solution, obj_1, obj_2, lamb)
+    # print('sub_obj_1 : {}'.format(sub_obj_1))
+    # print('sub_obj_2 : {}'.format(sub_obj_2))
+    print(len(lamb))
+    update_lambda_hyperopt(lamb, num, den)

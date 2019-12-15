@@ -29,7 +29,6 @@ def qa_solver(bqm, previous_solution, num_reads=100):
     sampler = EmbeddingComposite(DWaveSampler())
     response = sampler.sample(bqm, num_reads=num_reads)
     current_solution = previous_solution
-
     ener = []
     for sample, energy in response.data(['sample', 'energy']):
         ener.append(energy)
@@ -46,8 +45,9 @@ def qa_solver(bqm, previous_solution, num_reads=100):
             current_solution = sample
             size = len(previous_solution)
             solution = []
+            alphabet = list(current_solution.keys())[0][0]
             for i in range(size - 1):
-                key = 'x[{}]'.format(i)
+                key = alphabet + '[{}]'.format(i)
                 solution.append(current_solution[key])
             current_solution = np.append(np.array(solution),[1])
     return current_solution,response
@@ -61,12 +61,14 @@ def exact_solver(numerator, divisor, size, num_terms, is_spin = 0):
         binary = [0,1]
     min_value, objective_solution = float('Inf'), []
     comb = [np.append(np.array(i), [1]) for i in itertools.product(binary, repeat=size)]
+    keep = 0
     for i in range(len(comb)):
-        obj_1, _, _, _, n, d = dkb.objective_value(comb[i], numerator, divisor, np.array([1]*num_terms))
+        obj_1, sub, _, _, n, d = dkb.objective_value(comb[i], numerator, divisor, np.array([1]*num_terms))
         if min_value > obj_1:
             min_value = obj_1
             objective_solution = comb[i]
-    return min_value, objective_solution
+            keep = sub
+    return min_value, objective_solution, keep
 
 
 

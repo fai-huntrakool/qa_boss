@@ -11,11 +11,13 @@ def generate_test_case(size, num_terms, var_type="BINARY"):
         #np.random.seed(4+90*i)#2
         #np.random.seed(90+90*i)#3
         #np.random.seed(435+100*i)#4
+        np.random.seed(788 + 24 * i) #5 Case Loop
         numerator.append(np.random.randint(1, 10, size + 1))
         #np.random.seed(300+10*i)#1
         #np.random.seed(90+90*i)#2
         #np.random.seed(700+90*i)#3
         #np.random.seed(567+1*i)#4
+        np.random.seed(335 + 10 * i)
         divisor.append(np.random.randint(1, 10, size + 1))
     print(numerator)
     print(divisor)
