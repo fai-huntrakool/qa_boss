@@ -48,6 +48,6 @@ def mock_problem(size, num_covs, num_bins, limit_iteration = 100):
 
 
 if __name__ == '__main__':
-    #one_ratio(3, 1)
-    #multiple_ratio(10, 4, 150)
-    mock_problem(size = 10, num_covs=2, num_bins=3)
+    one_ratio(3, 1)
+    #multiple_ratio(10, 1, 150)
+    #mock_problem(size = 10, num_covs=2, num_bins=3)

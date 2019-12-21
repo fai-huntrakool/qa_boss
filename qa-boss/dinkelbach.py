@@ -11,7 +11,7 @@ def transform_x2spin(x):
 
 
 def objective_function(x, numerator, divisor):
-    num = np.dot(numerator, x)**2
+    num = np.dot(numerator, x)
     den = np.dot(divisor, x)
     return num, den
 
@@ -19,9 +19,9 @@ def objective_function(x, numerator, divisor):
 def objective_value(x, numerator, divisor, lamb):
     # obj_1 = num/den
     # obj_2 = num - lamb*den
-
     num, den = objective_function(x, numerator, divisor)
     den_with_lamb = lamb * den
+
 
     sub_obj_1 = [num[i] / den[i] if den[i] != 0 else float('Inf') for i in range(len(num))]
     obj_1 = np.sum(sub_obj_1)
@@ -56,16 +56,16 @@ def print_iteration_value(i, current_solution, obj_1, obj_2, lamb):
 
 def dinkelbach_for_one_ratio(x, lamb, numerator, divisor, previous_solution, i=1):
     bqm = gtp.construct_bqm(x, lamb, numerator, divisor)
-    current_solution = solver.sa_solver(bqm, previous_solution)
+    current_solution, res = solver.sa_solver(bqm, previous_solution)
     obj_1, sub_obj_1, obj_2, _, _, _ = objective_value(current_solution, numerator, divisor, lamb)
     previous_solution = current_solution
     print_iteration_value(i, current_solution, obj_1, obj_2, lamb)
     print('--------------------------------------------')
     if obj_2 != 0:
         lamb = np.array(sub_obj_1)
-        dinkelbach_for_one_ratio(x, lamb, numerator, divisor, previous_solution, i + 1)
+        return dinkelbach_for_one_ratio(x, lamb, numerator, divisor, previous_solution, i + 1)
     else:
-        return x, obj_1, obj_2
+        return current_solution, obj_1, obj_2
 
 
 def dinkelbach_for_multiple_ratios(x, lamb, u, v, uk, vk, numerator, divisor, previous_solution,
@@ -98,7 +98,7 @@ def dinkelbach_for_multiple_ratios(x, lamb, u, v, uk, vk, numerator, divisor, pr
 def update_lambda_hyperopt(lamb, num, den, u, v):
     _, func = f(lamb, num, den)
     sp = [hp.uniform(str(dim), 0, 5) for dim in range(len(lamb))]
-    best = fmin(fn=func, space=sp, algo=tpe.suggest, max_evals=50)
+    best = fmin(fn=func, space=sp, algo=tpe.suggest, max_evals=1000)
     lamb = list(best.values())
     print(np.array(lamb))
     return np.array(lamb)
